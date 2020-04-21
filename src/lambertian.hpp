@@ -25,7 +25,7 @@ class lambertian final : public material
                  vec3& attenuation, ray& scattered) const override
     {
         const vec3 scatter_direction = rec.normal + random_unit_vector();
-        scattered = ray(rec.p, scatter_direction);
+        scattered = ray(rec.p, scatter_direction, r_in.time());
         attenuation = albedo;
 
         return true;
