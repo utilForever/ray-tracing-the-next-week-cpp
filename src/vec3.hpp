@@ -118,6 +118,9 @@ class vec3
     double e[3];
 };
 
+// Type aliases for vec3
+using point3 = vec3;    // 3D point
+
 inline std::ostream& operator<<(std::ostream& out, const vec3& v)
 {
     return out << v.e[0] << ' ' << v.e[1] << ' ' << v.e[2];

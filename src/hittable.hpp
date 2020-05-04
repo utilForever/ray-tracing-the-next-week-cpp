@@ -10,6 +10,7 @@
 #ifndef RAY_TRACING_HITTABLE_HPP
 #define RAY_TRACING_HITTABLE_HPP
 
+#include "aabb.hpp"
 #include "ray.hpp"
 
 class material;
@@ -39,6 +40,7 @@ class hittable
 
     virtual bool hit(const ray& r, double t_min, double t_max,
                      hit_record& rec) const = 0;
+    virtual bool bounding_box(double t0, double t1, aabb& output_box) const = 0;
 };
 
 #endif

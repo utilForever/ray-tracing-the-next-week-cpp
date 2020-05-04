@@ -33,6 +33,7 @@ class moving_sphere final : public hittable
 
     bool hit(const ray& r, double t_min, double t_max,
              hit_record& rec) const override;
+    bool bounding_box(double t0, double t1, aabb& output_box) const override;
 
     vec3 center(double time) const;
 
@@ -84,6 +85,19 @@ inline bool moving_sphere::hit(const ray& r, double t_min, double t_max,
     }
 
     return false;
+}
+
+inline bool moving_sphere::bounding_box(double t0, double t1,
+                                        aabb& output_box) const
+{
+    const aabb box0(center(t0) - vec3(radius, radius, radius),
+                    center(t0) + vec3(radius, radius, radius));
+    const aabb box1(center(t1) - vec3(radius, radius, radius),
+                    center(t1) + vec3(radius, radius, radius));
+
+    output_box = surrounding_box(box0, box1);
+
+    return true;
 }
 
 inline vec3 moving_sphere::center(double time) const

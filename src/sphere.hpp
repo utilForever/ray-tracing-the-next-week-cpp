@@ -27,6 +27,7 @@ class sphere final : public hittable
 
     bool hit(const ray& r, double t_min, double t_max,
              hit_record& rec) const override;
+    bool bounding_box(double t0, double t1, aabb& output_box) const override;
 
     vec3 center;
     double radius{0.0};
@@ -75,6 +76,16 @@ inline bool sphere::hit(const ray& r, double t_min, double t_max,
     }
 
     return false;
+}
+
+inline bool sphere::bounding_box([[maybe_unused]] double t0,
+                                 [[maybe_unused]] double t1,
+                                 aabb& output_box) const
+{
+    output_box = aabb(center - vec3(radius, radius, radius),
+                      center + vec3(radius, radius, radius));
+
+    return true;
 }
 
 #endif
