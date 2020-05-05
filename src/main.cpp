@@ -15,6 +15,7 @@
 #include "lambertian.hpp"
 #include "metal.hpp"
 #include "moving_sphere.hpp"
+#include "noise_texture.hpp"
 #include "solid_color.hpp"
 #include "sphere.hpp"
 
@@ -73,8 +74,8 @@ hittable_list random_scene()
                     // diffuse
                     auto albedo = vec3::random() * vec3::random();
                     world.add(std::make_shared<moving_sphere>(
-                        center, center + vec3{0, random_double(0, .5), 0},
-                        0.0, 1.0, 0.2,
+                        center, center + vec3{0, random_double(0, .5), 0}, 0.0,
+                        1.0, 0.2,
                         std::make_shared<lambertian>(
                             std::make_shared<solid_color>(albedo))));
                 }
@@ -124,6 +125,20 @@ hittable_list two_spheres()
     return objects;
 }
 
+hittable_list two_perlin_spheres()
+{
+    hittable_list objects;
+
+    const auto pertext = std::make_shared<noise_texture>(4.0);
+
+    objects.add(std::make_shared<sphere>(
+        point3(0, -1000, 0), 1000, std::make_shared<lambertian>(pertext)));
+    objects.add(std::make_shared<sphere>(
+        point3(0, 2, 0), 2, std::make_shared<lambertian>(pertext)));
+
+    return objects;
+}
+
 int main()
 {
     const int image_width = 800;
@@ -134,7 +149,7 @@ int main()
 
     std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
 
-    const auto world = two_spheres();
+    const auto world = two_perlin_spheres();
 
     const vec3 lookfrom{13, 2, 3};
     const vec3 lookat{0, 0, 0};
