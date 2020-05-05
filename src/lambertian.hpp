@@ -12,11 +12,12 @@
 
 #include "hittable.hpp"
 #include "material.hpp"
+#include "texture.hpp"
 
 class lambertian final : public material
 {
  public:
-    lambertian(const vec3& a) : albedo(a)
+    lambertian(std::shared_ptr<texture> a) : albedo(a)
     {
         // Do nothing
     }
@@ -26,12 +27,12 @@ class lambertian final : public material
     {
         const vec3 scatter_direction = rec.normal + random_unit_vector();
         scattered = ray(rec.p, scatter_direction, r_in.time());
-        attenuation = albedo;
+        attenuation = albedo->value(rec.u, rec.v, rec.p);
 
         return true;
     }
 
-    vec3 albedo;
+    std::shared_ptr<texture> albedo;
 };
 
 #endif

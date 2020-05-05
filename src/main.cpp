@@ -8,12 +8,14 @@
 // References: https://raytracing.github.io
 
 #include "camera.hpp"
+#include "checker_texture.hpp"
 #include "common.hpp"
 #include "dielectric.hpp"
 #include "hittable_list.hpp"
 #include "lambertian.hpp"
 #include "metal.hpp"
 #include "moving_sphere.hpp"
+#include "solid_color.hpp"
 #include "sphere.hpp"
 
 #include <iostream>
@@ -50,9 +52,11 @@ hittable_list random_scene()
 {
     hittable_list world;
 
-    world.add(std::make_shared<sphere>(
-        vec3{0, -1000, 0}, 1000,
-        std::make_shared<lambertian>(vec3{0.5, 0.5, 0.5})));
+    auto checker = std::make_shared<checker_texture>(
+        std::make_shared<solid_color>(0.2, 0.3, 0.1),
+        std::make_shared<solid_color>(0.9, 0.9, 0.9));
+    world.add(std::make_shared<sphere>(point3{0, -1000, 0}, 1000,
+                                       std::make_shared<lambertian>(checker)));
 
     for (int a = -10; a < 10; ++a)
     {
@@ -69,8 +73,10 @@ hittable_list random_scene()
                     // diffuse
                     auto albedo = vec3::random() * vec3::random();
                     world.add(std::make_shared<moving_sphere>(
-                        center, center + vec3{0, random_double(0, .5), 0}, 0.0,
-                        1.0, 0.2, std::make_shared<lambertian>(albedo)));
+                        center, center + vec3{0, random_double(0, .5), 0},
+                        0.0, 1.0, 0.2,
+                        std::make_shared<lambertian>(
+                            std::make_shared<solid_color>(albedo))));
                 }
                 else if (choose_mat < 0.95)
                 {
@@ -94,11 +100,28 @@ hittable_list random_scene()
                                        std::make_shared<dielectric>(1.5)));
     world.add(std::make_shared<sphere>(
         vec3{-4, 1, 0}, 1.0,
-        std::make_shared<lambertian>(vec3{0.4, 0.2, 0.1})));
+        std::make_shared<lambertian>(
+            std::make_shared<solid_color>(0.4, 0.2, 0.1))));
     world.add(std::make_shared<sphere>(
         vec3{4, 1, 0}, 1.0, std::make_shared<metal>(vec3{0.7, 0.6, 0.5}, 0.0)));
 
     return world;
+}
+
+hittable_list two_spheres()
+{
+    hittable_list objects;
+
+    auto checker = std::make_shared<checker_texture>(
+        std::make_shared<solid_color>(0.2, 0.3, 0.1),
+        std::make_shared<solid_color>(0.9, 0.9, 0.9));
+
+    objects.add(std::make_shared<sphere>(
+        point3(0, -10, 0), 10, std::make_shared<lambertian>(checker)));
+    objects.add(std::make_shared<sphere>(
+        point3(0, 10, 0), 10, std::make_shared<lambertian>(checker)));
+
+    return objects;
 }
 
 int main()
@@ -111,7 +134,7 @@ int main()
 
     std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
 
-    const auto world = random_scene();
+    const auto world = two_spheres();
 
     const vec3 lookfrom{13, 2, 3};
     const vec3 lookat{0, 0, 0};

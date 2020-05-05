@@ -120,6 +120,7 @@ class vec3
 
 // Type aliases for vec3
 using point3 = vec3;    // 3D point
+using color = vec3;     // RGB color
 
 inline std::ostream& operator<<(std::ostream& out, const vec3& v)
 {
