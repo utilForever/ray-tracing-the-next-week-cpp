@@ -11,6 +11,8 @@
 #include "checker_texture.hpp"
 #include "common.hpp"
 #include "dielectric.hpp"
+#include "diffuse_light.hpp"
+#include "flip_face.hpp"
 #include "hittable_list.hpp"
 #include "image_texture.hpp"
 #include "lambertian.hpp"
@@ -19,35 +21,40 @@
 #include "noise_texture.hpp"
 #include "solid_color.hpp"
 #include "sphere.hpp"
+#include "xy_rect.hpp"
+#include "xz_rect.hpp"
+#include "yz_rect.hpp"
 
 #include <iostream>
 
-vec3 ray_color(const ray& r, const hittable& world, int depth)
+vec3 ray_color(const ray& r, const color& background, const hittable& world,
+               int depth)
 {
     hit_record rec;
 
     // If we've exceeded the ray bounce limit, no more light is gathered.
     if (depth <= 0)
     {
-        return vec3{0, 0, 0};
+        return color{0, 0, 0};
     }
 
-    if (world.hit(r, 0.001, infinity, rec))
+    // If the ray hits nothing, return the background color.
+    if (!world.hit(r, 0.001, infinity, rec))
     {
-        ray scattered;
-        vec3 attenuation;
-
-        if (rec.mat_ptr->scatter(r, rec, attenuation, scattered))
-        {
-            return attenuation * ray_color(scattered, world, depth - 1);
-        }
-
-        return vec3{0, 0, 0};
+        return background;
     }
 
-    const vec3 unit_direction = unit_vector(r.direction());
-    const auto t = 0.5 * (unit_direction.y() + 1.0);
-    return (1.0 - t) * vec3{1.0, 1.0, 1.0} + t * vec3{0.5, 0.7, 1.0};
+    ray scattered;
+    color attenuation;
+    const color emitted = rec.mat_ptr->emitted(rec.u, rec.v, rec.p);
+
+    if (!rec.mat_ptr->scatter(r, rec, attenuation, scattered))
+    {
+        return emitted;
+    }
+
+    return emitted +
+           attenuation * ray_color(scattered, background, world, depth - 1);
 }
 
 hittable_list random_scene()
@@ -150,25 +157,71 @@ hittable_list earth()
     return hittable_list(globe);
 }
 
+hittable_list simple_light()
+{
+    hittable_list objects;
+
+    auto pertext = std::make_shared<noise_texture>(4);
+    objects.add(std::make_shared<sphere>(
+        point3(0, -1000, 0), 1000, std::make_shared<lambertian>(pertext)));
+    objects.add(std::make_shared<sphere>(
+        point3(0, 2, 0), 2, std::make_shared<lambertian>(pertext)));
+
+    auto difflight =
+        std::make_shared<diffuse_light>(std::make_shared<solid_color>(4, 4, 4));
+    objects.add(std::make_shared<sphere>(point3(0, 7, 0), 2, difflight));
+    objects.add(std::make_shared<xy_rect>(3, 5, 1, 3, -2, difflight));
+
+    return objects;
+}
+
+hittable_list cornell_box()
+{
+    hittable_list objects;
+
+    auto red = std::make_shared<lambertian>(
+        std::make_shared<solid_color>(.65, .05, .05));
+    auto white = std::make_shared<lambertian>(
+        std::make_shared<solid_color>(.73, .73, .73));
+    auto green = std::make_shared<lambertian>(
+        std::make_shared<solid_color>(.12, .45, .15));
+    auto light = std::make_shared<diffuse_light>(
+        std::make_shared<solid_color>(15, 15, 15));
+
+    objects.add(std::make_shared<flip_face>(
+        std::make_shared<yz_rect>(0, 555, 0, 555, 555, green)));
+    objects.add(std::make_shared<yz_rect>(0, 555, 0, 555, 0, red));
+    objects.add(std::make_shared<xz_rect>(213, 343, 227, 332, 554, light));
+    objects.add(std::make_shared<flip_face>(
+        std::make_shared<xz_rect>(0, 555, 0, 555, 0, white)));
+    objects.add(std::make_shared<xz_rect>(0, 555, 0, 555, 555, white));
+    objects.add(std::make_shared<flip_face>(
+        std::make_shared<xy_rect>(0, 555, 0, 555, 555, white)));
+
+    return objects;
+}
+
 int main()
 {
-    const int image_width = 800;
-    const int image_height = 400;
+    const int image_width = 600;
+    const int image_height = 600;
     const int samples_per_pixel = 100;
     const int max_depth = 50;
     const auto aspect_ratio = static_cast<double>(image_width) / image_height;
 
     std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
 
-    const auto world = earth();
+    const auto world = cornell_box();
 
-    const vec3 lookfrom{13, 2, 3};
-    const vec3 lookat{0, 0, 0};
+    const vec3 lookfrom{278, 278, -800};
+    const vec3 lookat{278, 278, 0};
     const vec3 vup{0, 1, 0};
     const auto dist_to_focus = 10.0;
     const auto aperture = 0.0;
+    const auto vfov = 40.0;
+    const color background{0, 0, 0};
 
-    const camera cam(lookfrom, lookat, vup, 20, aspect_ratio, aperture,
+    const camera cam(lookfrom, lookat, vup, vfov, aspect_ratio, aperture,
                      dist_to_focus, 0.0, 1.0);
 
     for (int j = image_height - 1; j >= 0; --j)
@@ -184,7 +237,7 @@ int main()
                 const auto u = (i + random_double()) / image_width;
                 const auto v = (j + random_double()) / image_height;
                 ray r = cam.get_ray(u, v);
-                color += ray_color(r, world, max_depth);
+                color += ray_color(r, background, world, max_depth);
             }
 
             color.write_color(std::cout, samples_per_pixel);

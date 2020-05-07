@@ -21,6 +21,12 @@ class material
 
     virtual bool scatter(const ray& r_in, const hit_record& rec,
                          vec3& attenuation, ray& scattered) const = 0;
+
+    virtual color emitted([[maybe_unused]] double u, [[maybe_unused]] double v,
+                          [[maybe_unused]] const point3& p) const
+    {
+        return color(0, 0, 0);
+    }
 };
 
 inline double schlick(double cosine, double ref_idx)
