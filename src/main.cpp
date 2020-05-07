@@ -12,6 +12,7 @@
 #include "common.hpp"
 #include "dielectric.hpp"
 #include "hittable_list.hpp"
+#include "image_texture.hpp"
 #include "lambertian.hpp"
 #include "metal.hpp"
 #include "moving_sphere.hpp"
@@ -139,6 +140,16 @@ hittable_list two_perlin_spheres()
     return objects;
 }
 
+hittable_list earth()
+{
+    auto earth_texture = std::make_shared<image_texture>("earthmap.jpg");
+    auto earth_surface = std::make_shared<lambertian>(earth_texture);
+    const auto globe =
+        std::make_shared<sphere>(point3(0, 0, 0), 2, earth_surface);
+
+    return hittable_list(globe);
+}
+
 int main()
 {
     const int image_width = 800;
@@ -149,7 +160,7 @@ int main()
 
     std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
 
-    const auto world = two_perlin_spheres();
+    const auto world = earth();
 
     const vec3 lookfrom{13, 2, 3};
     const vec3 lookat{0, 0, 0};
