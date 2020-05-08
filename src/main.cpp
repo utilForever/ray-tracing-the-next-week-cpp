@@ -8,6 +8,7 @@
 // References: https://raytracing.github.io
 
 #include "box.hpp"
+#include "bvh.hpp"
 #include "camera.hpp"
 #include "checker_texture.hpp"
 #include "common.hpp"
@@ -258,6 +259,85 @@ hittable_list cornell_smoke()
     return objects;
 }
 
+hittable_list final_scene()
+{
+    hittable_list boxes1;
+    auto ground = std::make_shared<lambertian>(
+        std::make_shared<solid_color>(0.48, 0.83, 0.53));
+
+    const int boxes_per_side = 20;
+    for (int i = 0; i < boxes_per_side; i++)
+    {
+        for (int j = 0; j < boxes_per_side; j++)
+        {
+            const auto w = 100.0;
+            const auto x0 = -1000.0 + i * w;
+            const auto z0 = -1000.0 + j * w;
+            const auto y0 = 0.0;
+            const auto x1 = x0 + w;
+            const auto y1 = random_double(1, 101);
+            const auto z1 = z0 + w;
+
+            boxes1.add(std::make_shared<box>(point3(x0, y0, z0),
+                                             point3(x1, y1, z1), ground));
+        }
+    }
+
+    hittable_list objects;
+
+    objects.add(std::make_shared<bvh_node>(boxes1, 0, 1));
+
+    auto light =
+        std::make_shared<diffuse_light>(std::make_shared<solid_color>(7, 7, 7));
+    objects.add(std::make_shared<xz_rect>(123, 423, 147, 412, 554, light));
+
+    auto center1 = point3(400, 400, 200);
+    auto center2 = center1 + vec3(30, 0, 0);
+    auto moving_sphere_material = std::make_shared<lambertian>(
+        std::make_shared<solid_color>(0.7, 0.3, 0.1));
+    objects.add(std::make_shared<moving_sphere>(center1, center2, 0, 1, 50,
+                                                moving_sphere_material));
+
+    objects.add(std::make_shared<sphere>(point3(260, 150, 45), 50,
+                                         std::make_shared<dielectric>(1.5)));
+    objects.add(std::make_shared<sphere>(
+        point3(0, 150, 145), 50,
+        std::make_shared<metal>(color(0.8, 0.8, 0.9), 10.0)));
+
+    auto boundary = std::make_shared<sphere>(point3(360, 150, 145), 70,
+                                             std::make_shared<dielectric>(1.5));
+    objects.add(boundary);
+    objects.add(std::make_shared<constant_medium>(
+        boundary, 0.2, std::make_shared<solid_color>(0.2, 0.4, 0.9)));
+    boundary = std::make_shared<sphere>(point3(0, 0, 0), 5000,
+                                        std::make_shared<dielectric>(1.5));
+    objects.add(std::make_shared<constant_medium>(
+        boundary, .0001, std::make_shared<solid_color>(1, 1, 1)));
+
+    auto emat = std::make_shared<lambertian>(
+        std::make_shared<image_texture>("earthmap.jpg"));
+    objects.add(std::make_shared<sphere>(point3(400, 200, 400), 100, emat));
+    auto pertext = std::make_shared<noise_texture>(0.1);
+    objects.add(std::make_shared<sphere>(
+        point3(220, 280, 300), 80, std::make_shared<lambertian>(pertext)));
+
+    hittable_list boxes2;
+    auto white = std::make_shared<lambertian>(
+        std::make_shared<solid_color>(.73, .73, .73));
+    const int ns = 1000;
+    for (int j = 0; j < ns; j++)
+    {
+        boxes2.add(std::make_shared<sphere>(point3::random(0, 165), 10, white));
+    }
+
+    objects.add(std::make_shared<translate>(
+        std::make_shared<rotate_y>(std::make_shared<bvh_node>(boxes2, 0.0, 1.0),
+                                   15),
+        vec3(-100, 270, 395)));
+
+    return objects;
+}
+
 int main()
 {
     const int image_width = 600;
@@ -268,9 +348,9 @@ int main()
 
     std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
 
-    const auto world = cornell_smoke();
+    const auto world = final_scene();
 
-    const vec3 lookfrom{278, 278, -800};
+    const vec3 lookfrom{478, 278, -800};
     const vec3 lookat{278, 278, 0};
     const vec3 vup{0, 1, 0};
     const auto dist_to_focus = 10.0;
