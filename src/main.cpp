@@ -7,6 +7,7 @@
 // It is based on Ray Tracing in One Weekend book.
 // References: https://raytracing.github.io
 
+#include "box.hpp"
 #include "camera.hpp"
 #include "checker_texture.hpp"
 #include "common.hpp"
@@ -19,8 +20,10 @@
 #include "metal.hpp"
 #include "moving_sphere.hpp"
 #include "noise_texture.hpp"
+#include "rotate_y.hpp"
 #include "solid_color.hpp"
 #include "sphere.hpp"
+#include "translate.hpp"
 #include "xy_rect.hpp"
 #include "xz_rect.hpp"
 #include "yz_rect.hpp"
@@ -197,6 +200,18 @@ hittable_list cornell_box()
     objects.add(std::make_shared<xz_rect>(0, 555, 0, 555, 555, white));
     objects.add(std::make_shared<flip_face>(
         std::make_shared<xy_rect>(0, 555, 0, 555, 555, white)));
+
+    std::shared_ptr<hittable> box1 =
+        std::make_shared<box>(point3(0, 0, 0), point3(165, 330, 165), white);
+    box1 = std::make_shared<rotate_y>(box1, 15);
+    box1 = std::make_shared<translate>(box1, vec3(265, 0, 295));
+    objects.add(std::move(box1));
+
+    std::shared_ptr<hittable> box2 =
+        std::make_shared<box>(point3(0, 0, 0), point3(165, 165, 165), white);
+    box2 = std::make_shared<rotate_y>(box2, -18);
+    box2 = std::make_shared<translate>(box2, vec3(130, 0, 65));
+    objects.add(std::move(box2));
 
     return objects;
 }
