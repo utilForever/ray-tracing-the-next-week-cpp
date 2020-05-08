@@ -11,6 +11,7 @@
 #include "camera.hpp"
 #include "checker_texture.hpp"
 #include "common.hpp"
+#include "constant_medium.hpp"
 #include "dielectric.hpp"
 #include "diffuse_light.hpp"
 #include "flip_face.hpp"
@@ -216,6 +217,47 @@ hittable_list cornell_box()
     return objects;
 }
 
+hittable_list cornell_smoke()
+{
+    hittable_list objects;
+
+    auto red = std::make_shared<lambertian>(
+        std::make_shared<solid_color>(.65, .05, .05));
+    auto white = std::make_shared<lambertian>(
+        std::make_shared<solid_color>(.73, .73, .73));
+    auto green = std::make_shared<lambertian>(
+        std::make_shared<solid_color>(.12, .45, .15));
+    auto light =
+        std::make_shared<diffuse_light>(std::make_shared<solid_color>(7, 7, 7));
+
+    objects.add(std::make_shared<flip_face>(
+        std::make_shared<yz_rect>(0, 555, 0, 555, 555, green)));
+    objects.add(std::make_shared<yz_rect>(0, 555, 0, 555, 0, red));
+    objects.add(std::make_shared<xz_rect>(113, 443, 127, 432, 554, light));
+    objects.add(std::make_shared<flip_face>(
+        std::make_shared<xz_rect>(0, 555, 0, 555, 555, white)));
+    objects.add(std::make_shared<xz_rect>(0, 555, 0, 555, 0, white));
+    objects.add(std::make_shared<flip_face>(
+        std::make_shared<xy_rect>(0, 555, 0, 555, 555, white)));
+
+    std::shared_ptr<hittable> box1 =
+        std::make_shared<box>(point3(0, 0, 0), point3(165, 330, 165), white);
+    box1 = std::make_shared<rotate_y>(box1, 15);
+    box1 = std::make_shared<translate>(box1, vec3(265, 0, 295));
+
+    std::shared_ptr<hittable> box2 =
+        std::make_shared<box>(point3(0, 0, 0), point3(165, 165, 165), white);
+    box2 = std::make_shared<rotate_y>(box2, -18);
+    box2 = std::make_shared<translate>(box2, vec3(130, 0, 65));
+
+    objects.add(std::make_shared<constant_medium>(
+        box1, 0.01, std::make_shared<solid_color>(0, 0, 0)));
+    objects.add(std::make_shared<constant_medium>(
+        box2, 0.01, std::make_shared<solid_color>(1, 1, 1)));
+
+    return objects;
+}
+
 int main()
 {
     const int image_width = 600;
@@ -226,7 +268,7 @@ int main()
 
     std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
 
-    const auto world = cornell_box();
+    const auto world = cornell_smoke();
 
     const vec3 lookfrom{278, 278, -800};
     const vec3 lookat{278, 278, 0};
