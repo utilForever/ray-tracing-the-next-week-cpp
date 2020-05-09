@@ -4,7 +4,7 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-// It is based on Ray Tracing in One Weekend book.
+// It is based on Ray Tracing: The Next Week book.
 // References: https://raytracing.github.io
 
 #ifndef RAY_TRACING_HITTABLE_LIST_HPP

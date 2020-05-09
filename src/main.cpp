@@ -4,7 +4,7 @@
 // personal capacity and are not conveying any rights to any intellectual
 // property of any third parties.
 
-// It is based on Ray Tracing in One Weekend book.
+// It is based on Ray Tracing: The Next Week book.
 // References: https://raytracing.github.io
 
 #include "box.hpp"
@@ -342,7 +342,7 @@ int main()
 {
     const int image_width = 600;
     const int image_height = 600;
-    const int samples_per_pixel = 100;
+    const int samples_per_pixel = 10000;
     const int max_depth = 50;
     const auto aspect_ratio = static_cast<double>(image_width) / image_height;
 
